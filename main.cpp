@@ -3,11 +3,27 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <limits>
-#include <sstream>
 #include <string>
 
 using namespace std;
+
+int checkNumber(string answer) {
+    if (answer == "") {
+        return -1;
+    }
+
+    int number = 0;
+    int length = answer.length();
+
+    for (int i = 0; i < length; i++) {
+        if (answer[i] < '0' || answer[i] > '9') {
+            return -1;
+        }
+        number = number * 10 + (answer[i] - '0');
+    }
+
+    return number;
+}
 
 int main() {
     srand(time(0));
@@ -20,49 +36,50 @@ int main() {
     string filename;
     int order;
     int requestedWords;
+    string answer;
 
-    cout << "Enter input filename: ";
+    cout << "File: ";
     getline(cin, filename);
 
     while (true) {
-        cout << "Enter order (1, 2, or 3): ";
+        cout << "Order (1-3): ";
+        cin >> answer;
+        order = checkNumber(answer);
 
-        if (cin >> order && order >= 1 && order <= 3) {
+        if (order >= 1 && order <= 3) {
             break;
         }
 
-        cout << "Please enter 1, 2, or 3." << endl;
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), 10);
+        cout << "Enter 1, 2, or 3." << endl;
     }
 
     while (true) {
-        cout << "Enter maximum number of words to generate: ";
+        cout << "Enter max words: ";
+        cin >> answer;
+        requestedWords = checkNumber(answer);
 
-        if (cin >> requestedWords && requestedWords >= order) {
+        if (requestedWords >= order) {
             break;
         }
 
-        cout << "Please enter a number that is at least " << order << "." << endl;
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), 10);
+        cout << "Enter at least " << order << "." << endl;
     }
 
     int numWords = readWordsFromFile(filename, words, MAX_WORDS);
 
     if (numWords == -1) {
-        cout << "Error: Could not open that file." << endl;
+        cout << "Could not open file." << endl;
         return 1;
     }
 
     if (numWords <= order) {
-        cout << "Error: The file needs at least " << order + 1
-             << " words for this order." << endl;
+        cout << "File needs at least " << order + 1
+             << " words." << endl;
         return 1;
     }
 
     if (numWords == MAX_WORDS) {
-        cout << "Note: Only the first " << MAX_WORDS
+        cout << "Only first " << MAX_WORDS
              << " words were used." << endl;
     }
 
@@ -70,7 +87,7 @@ int main() {
                                      prefixes, suffixes, MAX_WORDS);
 
     if (chainSize <= 0) {
-        cout << "Error: The Markov chain could not be built." << endl;
+        cout << "Could not build chain." << endl;
         return 1;
     }
 
@@ -78,21 +95,26 @@ int main() {
                                  order, requestedWords);
 
     int actualWords = 0;
-    string oneWord;
-    istringstream counter(output);
 
-    while (counter >> oneWord) {
-        actualWords++;
+    if (output != "") {
+        actualWords = 1;
+        int outputLength = output.length();
+
+        for (int i = 0; i < outputLength; i++) {
+            if (output[i] == ' ') {
+                actualWords++;
+            }
+        }
     }
 
     cout << endl;
     cout << "Generated text:" << endl;
     cout << output << endl << endl;
-    cout << "Generated " << actualWords << " of at most "
+    cout << "Generated " << actualWords << " of "
          << requestedWords << " words." << endl;
 
     if (actualWords < requestedWords) {
-        cout << "Stopped early because the current prefix had no successor."
+        cout << "Stopped early, no next word."
              << endl;
     }
 
